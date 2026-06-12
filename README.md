@@ -31,7 +31,7 @@ Two buttons. That's the whole interface.
 | 🎲  | **generate** | rolls a completely new world                                |
 | 🧬  | **mutate**   | nudges the current one — same neighbourhood, different face |
 
-Below them hides a collapsed **seed** field: read the current world's seed, or paste anything — `1vxi380`, `banana`, your name — and load it. Arbitrary text hashes to a valid world; canonical seeds round-trip exactly. Same seed in, same pixels out. Forever.
+Below them sits the **seed** panel: the current world's seed, its main traits (type, size, rings, …), and a field to load your own — paste anything: `1vxi380`, `banana`, your name. Arbitrary text hashes to a valid world; canonical seeds round-trip exactly. Same seed in, same pixels out. Forever.
 
 <br/>
 
@@ -43,7 +43,7 @@ Eight body types, each with eight hand-tuned colour ramps:
 | --- | --------------------------------------------------------- | --- | ------------------------------------------------ |
 | 🪐  | **gas giant** — banded atmosphere, storm spots            | ☀️  | **star** — radiant corona, directional rays      |
 | 🌍  | **terran world** — oceans, continents, clouds, polar caps | 💫  | **neutron star** — pulsar jets and pulse rings   |
-| 🧊  | **ice world** — frozen crust, cracked fault lines         | 🕳️  | **black hole** — accretion disk and lensed light |
+| 🧊  | **ice world** — frozen crust, cracked fault lines         | 🕳️  | **black hole** — tilted accretion disks, lensed light, feeding jets |
 | 🌑  | **moon** — cratered grey rock                             | 🌋  | **magma core** — lava veins through dark crust   |
 
 …and any of them can carry **rings** (one or two, varied tilt), a little **companion star**, or a **deteriorating crust** that crumbles into drifting debris.
@@ -103,7 +103,7 @@ Paste any of these into the seed field — they're the exact worlds from the her
 | `0guy9ad` | ☀️ the radiant star                   |
 | `3oqju3a` | 💫 neutron star with polar jets       |
 | `2j4ukhu` | 🧊 ringed ice world                   |
-| `0qphqhb` | 🕳️ black hole                         |
+| `0qpi6a7` | 🕳️ feeding black hole with jets       |
 | `0jpejuz` | 🌑 crumbling moon                     |
 
 <br/>

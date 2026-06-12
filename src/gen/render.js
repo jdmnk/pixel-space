@@ -113,6 +113,10 @@ const HOLE = [
   ['#12537a', '#1ca8e0', '#7ce8ff'],
   ['#5e127a', '#a81ce0', '#e87cff'],
   ['#7a4a12', '#e09c1c', '#ffe97c'],
+  ['#7a1230', '#e01c50', '#ff7ca0'],
+  ['#0f6e4f', '#1cc28a', '#7cffd4'],
+  ['#2d3a8a', '#5c7ae0', '#b8d0ff'],
+  ['#8a2d5e', '#e05ca0', '#ffb8d9'],
 ]
 
 const RING_COLORS = [
@@ -355,14 +359,15 @@ export function renderScene(canvas, p) {
         }
       }
     }
-    // rays
+    // rays — roughly proportional to the body so big suns shine far
     const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]]
     if (p.feature >= 2) dirs.push([0.707, 0.707], [-0.707, 0.707], [0.707, -0.707], [-0.707, -0.707])
-    const len = 4 + (p.size >> 1)
+    const len = Math.round(R * 0.55) + 2
     for (const [ux, uy] of dirs) {
-      const l = len * (0.7 + rnd() * 0.5)
+      const l = len * (0.75 + rnd() * 0.45)
       for (let s = 1; s <= l; s++) {
-        put(CX + ux * (R + 1 + s), CY + uy * (R + 1 + s), s < l * 0.55 ? ramp[3] : ramp[1])
+        const t = s / l
+        put(CX + ux * (R + 1 + s), CY + uy * (R + 1 + s), t < 0.4 ? ramp[3] : t < 0.7 ? ramp[2] : ramp[1])
       }
     }
     // solar prominences when "deteriorating"
@@ -422,23 +427,39 @@ export function renderScene(canvas, p) {
     }
   }
 
+  // Black holes vary by seed: disk tilt (ringStyle), thin/blazing disk
+  // (feature), single or double disk (rings), and a feeding state (decay)
+  // that adds white-hot clumps and relativistic jets.
   function drawBlackHole() {
-    const acc = HOLE[p.palette % HOLE.length]
-    const rx = R * 1.9
-    const ry = rx * 0.28
+    const acc = HOLE[p.palette]
+    const hot = '#fff3d6'
+    const tilt = 0.2 + p.ringStyle * 0.07
+    const disks = p.rings >= 2 ? 2 : 1
+    const thick = p.feature >= 2 ? 4.4 : 2.9
+    const rx0 = R * 1.9
     const disk = (front) => {
       for (let y = 0; y < S; y++) {
         const dy = y - CY
         if (front ? dy < 0 : dy >= 0) continue
         for (let x = 0; x < S; x++) {
           const dx = x - CX
-          const a = dx / rx
-          const b = dy / ry
-          const q = Math.sqrt(a * a + b * b)
-          const w = 3.2 / rx
-          if (Math.abs(q - 1) < w) {
-            const hot = Math.abs(q - 1) < w * 0.45
-            put(x, y, front ? (hot ? '#fff3d6' : acc[2]) : hot ? acc[2] : acc[1])
+          for (let d = 0; d < disks; d++) {
+            const rx = rx0 + d * 7
+            const ry = rx * tilt
+            const a = dx / rx
+            const b = dy / ry
+            const q = Math.sqrt(a * a + b * b)
+            const w = (thick / rx) * (d ? 0.55 : 1)
+            if (Math.abs(q - 1) < w) {
+              const inner = Math.abs(q - 1) < w * 0.45
+              let col
+              if (d > 0) col = front ? acc[1] : acc[0]
+              else if (front) col = inner ? hot : acc[2]
+              else col = inner ? acc[2] : acc[1]
+              if (p.decay && d === 0 && hash2(x, y, nseed) > 0.8) col = hot
+              put(x, y, col)
+              break
+            }
           }
         }
       }
@@ -453,6 +474,21 @@ export function renderScene(canvas, p) {
         else if (r < R * 0.8) put(x, y, '#08070f')
         else if (r < R * 1.06 && dy < -R * 0.25) put(x, y, acc[1]) // lensed light above
         else if (r < R * 1.3 && (x + y) % 2 === 0 && r >= R * 1.06) put(x, y, acc[0])
+      }
+    }
+    if (p.decay) {
+      const len = R * 1.5
+      for (const sgn of [1, -1]) {
+        for (let s = 0; s < len; s++) {
+          const t = s / len
+          const jy = CY + sgn * Math.round(R * 1.05 + s)
+          if (t < 0.45) {
+            put(CX, jy, acc[2])
+            put(CX + ((s & 1) ? 1 : -1), jy, acc[1])
+          } else if ((s & 1) === 0) {
+            put(CX, jy, acc[1])
+          }
+        }
       }
     }
     disk(true)

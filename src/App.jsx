@@ -20,6 +20,7 @@ export default function App() {
 function Generator() {
   const [seed, setSeed] = useState(randomSeed)
   const [field, setField] = useState(seed)
+  const [seedOpen, setSeedOpen] = useState(true)
   const canvasRef = useSceneCanvas(seed)
   const params = decodeSeed(seed)
 
@@ -28,6 +29,17 @@ function Generator() {
   const load = () => {
     if (field.trim()) setSeed(canonicalSeed(field))
   }
+
+  const ringCount =
+    params.type <= 4 ? [0, 1, 1, 2][params.rings] : params.type === 7 ? (params.rings >= 2 ? 2 : 1) : null
+  const traits = [
+    ['type', TYPE_NAMES[params.type]],
+    ['size', `${params.size + 1} / 8`],
+    ['palette', `${params.palette + 1} / 8`],
+    ['rings', ringCount === null ? '—' : String(ringCount)],
+    ['buddy ✦', params.companion ? 'yes' : 'no'],
+    ['decay', params.type === 6 ? '—' : params.decay ? 'yes' : 'no'],
+  ]
 
   return (
     <main className="app">
@@ -44,8 +56,6 @@ function Generator() {
         </div>
       </div>
 
-      <p className="label">· {TYPE_NAMES[params.type]} ·</p>
-
       <div className="buttons">
         <button className="btn pink" onClick={() => setSeed(randomSeed())}>
           generate
@@ -55,7 +65,7 @@ function Generator() {
         </button>
       </div>
 
-      <details className="seedbox">
+      <details className="seedbox" open={seedOpen} onToggle={(e) => setSeedOpen(e.target.open)}>
         <summary>seed</summary>
         <div className="seedrow">
           <input
@@ -69,6 +79,14 @@ function Generator() {
             load
           </button>
         </div>
+        <ul className="traits">
+          {traits.map(([k, v]) => (
+            <li key={k}>
+              <span>{k}</span>
+              {v}
+            </li>
+          ))}
+        </ul>
       </details>
     </main>
   )

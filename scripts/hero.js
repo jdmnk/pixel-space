@@ -26,7 +26,7 @@ const SCENES = [
   { center: [1080, 195], scale: 3, p: { type: 1, palette: 0, size: 6, rings: 0, ringStyle: 0, companion: 1, decay: 0, feature: 2, detail: 19191 } },
   { center: [180, 430], scale: 2, p: { type: 4, palette: 0, size: 5, rings: 0, ringStyle: 0, companion: 0, decay: 0, feature: 3, detail: 55123 } },
   { center: [520, 465], scale: 2, p: { type: 3, palette: 0, size: 5, rings: 0, ringStyle: 0, companion: 0, decay: 0, feature: 3, detail: 27182 } },
-  { center: [820, 455], scale: 2, p: { type: 7, palette: 1, size: 5, rings: 0, ringStyle: 0, companion: 0, decay: 0, feature: 0, detail: 12321 } },
+  { center: [820, 455], scale: 2, p: { type: 7, palette: 1, size: 5, rings: 0, ringStyle: 2, companion: 0, decay: 1, feature: 0, detail: 12321 } },
   { center: [1120, 440], scale: 2, p: { type: 3, palette: 1, size: 4, rings: 0, ringStyle: 0, companion: 0, decay: 1, feature: 2, detail: 9090 } },
 ]
 
