@@ -3,6 +3,23 @@ import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from '.
 import { renderScene, renderSpace } from './gen/render.ts'
 
 type SceneMode = 'world' | 'cosmos'
+type Theme = 'light' | 'dark'
+
+const META_THEME = { light: '#faf3ea', dark: '#1b1626' }
+
+function useTheme(): [Theme, () => void] {
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('theme')
+    if (saved === 'light' || saved === 'dark') return saved
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  })
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    localStorage.setItem('theme', theme)
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', META_THEME[theme])
+  }, [theme])
+  return [theme, () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))]
+}
 
 function useSceneCanvas(seed: string, mode: SceneMode = 'world') {
   const ref = useRef<HTMLCanvasElement>(null)
@@ -27,6 +44,7 @@ function Generator() {
   const [field, setField] = useState(seed)
   const [seedOpen, setSeedOpen] = useState(true)
   const [mode, setMode] = useState<SceneMode>('world')
+  const [theme, toggleTheme] = useTheme()
   const canvasRef = useSceneCanvas(seed, mode)
   const params = decodeSeed(seed)
 
@@ -49,6 +67,15 @@ function Generator() {
 
   return (
     <main className="app">
+      <button
+        className="theme-toggle"
+        onClick={toggleTheme}
+        aria-label={theme === 'light' ? 'switch to dark mode' : 'switch to light mode'}
+        title={theme === 'light' ? 'dark mode' : 'light mode'}
+      >
+        {theme === 'light' ? '☾' : '☀'}
+      </button>
+
       <span className="deco deco-a">✦</span>
       <span className="deco deco-b">✦</span>
       <span className="deco deco-c">✧</span>

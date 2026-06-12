@@ -1,14 +1,31 @@
 :root {
+  /* text + structure: --ink is the dark colour that reads on the pastel
+     button fills (stays dark in both themes); --text is body copy (flips);
+     --line draws borders + frames; --dot is the page texture */
   --ink: #4a3f5e;
-  --ink-soft: #9b8aa8;
+  --text: #4a3f5e;
+  --text-soft: #9b8aa8;
+  --line: #4a3f5e;
   --paper: #faf3ea;
   --card: #fffdf8;
+  --dot: #efdfe3;
+  --lavender: #c9b8e6;
   --pink: #ffb7c5;
   --pink-deep: #f298ad;
   --mint: #b8e6c9;
   --mint-deep: #93d4ad;
   --shadow: #e3d0d8;
   --notch: 8px;
+}
+
+:root[data-theme='dark'] {
+  --text: #ece6f5;
+  --text-soft: #8d7fa6;
+  --line: #5b4f74;
+  --paper: #1b1626;
+  --card: #271f36;
+  --dot: #2a2238;
+  --shadow: #100c1b;
 }
 
 * {
@@ -24,10 +41,11 @@ body,
 
 body {
   font-family: 'Pixelify Sans', monospace;
-  color: var(--ink);
+  color: var(--text);
   background-color: var(--paper);
-  background-image: radial-gradient(#efdfe3 1.2px, transparent 1.2px);
+  background-image: radial-gradient(var(--dot) 1.2px, transparent 1.2px);
   background-size: 26px 26px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .app {
@@ -52,7 +70,7 @@ body {
 
 /* pixel-notched card around the canvas */
 .frame {
-  background: var(--ink);
+  background: var(--line);
   padding: 4px;
   clip-path: polygon(
     var(--notch) 0,
@@ -101,6 +119,34 @@ canvas.wide {
   width: min(88vw, 576px);
 }
 
+/* day / night toggle, tucked in the corner */
+.theme-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-family: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--text);
+  background: var(--card);
+  border: 3px solid var(--line);
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--line);
+  transition: transform 0.05s steps(1), box-shadow 0.05s steps(1);
+}
+.theme-toggle:hover {
+  filter: brightness(1.05);
+}
+.theme-toggle:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--line);
+}
+
 /* world / cosmos mode switch */
 .modes {
   display: flex;
@@ -110,9 +156,9 @@ canvas.wide {
   font-family: inherit;
   font-size: 0.95rem;
   letter-spacing: 1px;
-  color: var(--ink-soft);
+  color: var(--text-soft);
   background: var(--card);
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   padding: 5px 16px;
   cursor: pointer;
 }
@@ -122,12 +168,12 @@ canvas.wide {
 }
 
 .mode.on {
-  background: #c9b8e6;
+  background: var(--lavender);
   color: var(--ink);
 }
 
 .mode:hover:not(.on) {
-  color: var(--ink);
+  color: var(--text);
 }
 
 @keyframes pop {
@@ -200,7 +246,7 @@ canvas.wide {
 
 .seedbox summary {
   cursor: pointer;
-  color: var(--ink-soft);
+  color: var(--text-soft);
   list-style: none;
   user-select: none;
   letter-spacing: 1px;
@@ -215,7 +261,7 @@ canvas.wide {
   content: '▾ ';
 }
 .seedbox summary:hover {
-  color: var(--ink);
+  color: var(--text);
 }
 
 .seedrow {
@@ -228,9 +274,9 @@ canvas.wide {
 .seedrow input {
   font-family: inherit;
   font-size: 1rem;
-  color: var(--ink);
+  color: var(--text);
   background: var(--card);
-  border: 3px solid var(--ink);
+  border: 3px solid var(--line);
   padding: 6px 10px;
   width: 150px;
   letter-spacing: 2px;
@@ -261,7 +307,7 @@ canvas.wide {
 }
 
 .traits li span {
-  color: var(--ink-soft);
+  color: var(--text-soft);
 }
 
 @media (max-width: 480px) {
@@ -292,7 +338,7 @@ canvas.wide {
 .deco-c {
   top: 26%;
   right: 18%;
-  color: #c9b8e6;
+  color: var(--lavender);
   animation-delay: 1.5s;
   font-size: 1rem;
 }

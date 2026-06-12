@@ -40,6 +40,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // set theme before paint to avoid a flash of the wrong palette
+      (function () {
+        var saved = localStorage.getItem('theme')
+        var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
