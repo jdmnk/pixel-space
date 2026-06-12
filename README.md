@@ -16,8 +16,8 @@
 
 <br/>
 
-_A tiny generative toy that draws retro pixel-art planets, stars and stranger things._
-_Every world is deterministic — the same seven characters always paint the same sky._
+_A little generative toy that draws retro pixel-art planets, stars, and the occasional stranger thing._
+_Worlds are deterministic, so the same seven characters always give you back the same sky._
 
 </div>
 
@@ -25,22 +25,17 @@ _Every world is deterministic — the same seven characters always paint the sam
 
 ## ✦ what is it
 
-Two buttons. That's the whole interface.
+Two buttons. **Generate** rolls a new world; **mutate** nudges the current one so you land on a cousin rather than a stranger.
 
-|     | button       | what it does                                                |
-| --- | ------------ | ----------------------------------------------------------- |
-| 🎲  | **generate** | rolls a completely new world                                |
-| 🧬  | **mutate**   | nudges the current one — same neighbourhood, different face |
+A **world / cosmos** toggle switches the view between your planet alone and a wider sky with a few neighbours, recoloured to match its palette so the scene hangs together.
 
-A **world / cosmos** switch picks the view: a single portrait of your world, or a wider sky where it hangs among a few deterministic neighbours — each colour-matched to the featured world's dominant hue so every cosmos reads as one sky. Same seed, same cosmos.
-
-Below them sits the **seed** panel: the current world's seed, its main traits (type, size, rings, …), and a field to load your own — paste anything: `1vxi380`, `banana`, your name. Arbitrary text hashes to a valid world; canonical seeds round-trip exactly. Same seed in, same pixels out. Forever.
+The **seed** panel shows the current seed and its traits, with a box to type your own. Any text works — `banana`, your name — it just gets hashed into a world. Same seed, same pixels.
 
 <br/>
 
 ## ✦ the worlds
 
-Eight body types, each with eight hand-tuned colour ramps:
+Eight body types, each with its own set of eight colour ramps to pull from:
 
 |     | type                                                      |     | type                                             |
 | --- | --------------------------------------------------------- | --- | ------------------------------------------------ |
@@ -49,13 +44,13 @@ Eight body types, each with eight hand-tuned colour ramps:
 | 🧊  | **ice world** — frozen crust, cracked fault lines         | 🕳️  | **black hole** — tilted accretion disks, lensed light, feeding jets |
 | 🌑  | **moon** — cratered grey rock                             | 🌋  | **magma core** — lava veins through dark crust   |
 
-…and any of them can carry **rings** (one or two, varied tilt), a little **companion star**, or a **deteriorating crust** that crumbles into drifting debris.
+Any of them can also pick up **rings** (one or two, varied tilt), a small **companion star**, or a **deteriorating crust** that crumbles and sheds debris.
 
 <br/>
 
 ## ✦ how a world fits in 7 characters
 
-The seed _is_ the artwork — 33 bits packed into base36:
+No asset library — the seed is the whole picture, 33 bits packed into seven base36 characters:
 
 ```
         1 v x i 3 8 0          ← the big pink gas giant up top
@@ -68,9 +63,9 @@ The seed _is_ the artwork — 33 bits packed into base36:
   └──────┴─────────┴──────┴───────┴──────┴─────────┴───────┴─────────┴─────────┘
 ```
 
-The 16-bit `noise` field seeds every surface detail — continents, craters, cracks, storms. **Mutation** flips a handful of noise bits and occasionally touches another field, so mutants come out looking like _siblings_ of the original world instead of fresh rolls.
+The 16-bit `noise` field drives the surface — continents, craters, cracks, storms. Mutation mostly flips a few of those bits and occasionally pokes another field, which is why a mutant reads as a sibling.
 
-The renderer ([`src/gen/render.js`](src/gen/render.js)) is **dependency-free**: a seeded PRNG, two-octave value noise, and raw pixels on a 96×96 canvas. The same code draws the app, the gallery, and the hero image at the top of this page.
+The renderer in [`src/gen/render.ts`](src/gen/render.ts) has no dependencies: a seeded PRNG, some value noise, and pixels on a 96×96 canvas. The same file draws the app, the gallery, and the hero image above.
 
 <br/>
 
@@ -83,27 +78,21 @@ npm install
 npm run dev     # → http://localhost:5173
 ```
 
-No API keys. No backend. No config.
+No keys, no backend, nothing to configure.
 
-| command         |                                                        |
-| --------------- | ------------------------------------------------------ |
-| `npm run dev`   | start the toy                                          |
-| `npm run build` | production build → `dist/`                             |
-| `npm run hero`  | regenerate the README hero + social card from curated seeds |
+| command         |                                                  |
+| --------------- | ------------------------------------------------ |
+| `npm run dev`   | start the toy                                    |
+| `npm run build` | production build into `dist/`                    |
+| `npm run hero`  | rebuild the hero and social card from set seeds  |
 
-### deploy
-
-It's a static Vite site — one click puts it on Vercel:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjdmnk%2Fpixel-space)
-
-> **hidden gallery** — add `?gallery` to the URL for a grid of 48 random worlds at once.
+> Add `?gallery` to the URL for a grid of 48 random worlds.
 
 <br/>
 
 ## ✦ try these seeds
 
-Paste any of these into the seed field — they're the exact worlds from the hero image:
+The worlds from the hero image — drop any into the seed box:
 
 |   seed    | world                                 |
 | :-------: | ------------------------------------- |
@@ -117,38 +106,21 @@ Paste any of these into the seed field — they're the exact worlds from the her
 
 <br/>
 
-## ✦ project structure
-
-```
-src/
-  gen/
-    seed.ts     ← pack · unpack · mutate · hash — all seed logic
-    render.ts   ← deterministic pixel renderer (world + cosmos), zero deps
-  App.tsx       ← UI: generator, mode switch, hidden gallery
-  styles.css    ← pastel pixel-toy aesthetic
-scripts/
-  hero.ts       ← paints docs/preview.png + public/og.png with the app's own renderer
-public/
-  og.png        ← 1200×630 social share card (generated)
-```
-
-<br/>
-
 ## ✦ contributing
 
-Spotted a weird render? Have an idea for a new world type? PRs welcome.
+Broken render or an idea for a new world? Open an issue or a PR. A few notes:
 
-- keep `render.js` dependency-free
-- new body types: add a renderer to the `switch` in `render.js` + a name in `TYPE_NAMES` in `seed.js`
-- new colour ramps are a perfect first contribution — the palettes live at the top of `render.js`
+- keep `render.ts` dependency-free
+- new body type: add a renderer to the `switch` in `render.ts` and a name in `TYPE_NAMES` in `seed.ts`
+- colour ramps live at the top of `render.ts` — a good first contribution
 
-Not every generated world is beautiful. That's part of the charm. ✦
+Don't worry about every world being pretty. Plenty aren't, and that's half the fun.
 
 <br/>
 
 ## ✦ license
 
-[MIT](LICENSE) — use it, fork it, ship it, remix it.
+[MIT](LICENSE). Fork it, ship it, remix it, whatever you like.
 
 <br/>
 
