@@ -32,7 +32,7 @@ Two buttons. That's the whole interface.
 | 🎲  | **generate** | rolls a completely new world                                |
 | 🧬  | **mutate**   | nudges the current one — same neighbourhood, different face |
 
-A **world / cosmos** switch picks the view: a single portrait of your world, or a wider sky where it hangs among a few deterministic neighbours. Same seed, same cosmos.
+A **world / cosmos** switch picks the view: a single portrait of your world, or a wider sky where it hangs among a few deterministic neighbours — each colour-matched to the featured world's dominant hue so every cosmos reads as one sky. Same seed, same cosmos.
 
 Below them sits the **seed** panel: the current world's seed, its main traits (type, size, rings, …), and a field to load your own — paste anything: `1vxi380`, `banana`, your name. Arbitrary text hashes to a valid world; canonical seeds round-trip exactly. Same seed in, same pixels out. Forever.
 

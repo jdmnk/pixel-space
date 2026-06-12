@@ -1,4 +1,4 @@
-import { mulberry32, unpack, type WorldParams } from './seed.ts'
+import { mulberry32, pack, unpack, type WorldParams } from './seed.ts'
 
 const TAU = Math.PI * 2
 
@@ -581,6 +581,65 @@ export function renderScene(canvas: PixelCanvas, p: WorldParams, opts: RenderOpt
   }
 }
 
+// --- cosmos colour matching --------------------------------------------------
+
+function hexToHs(hexcol: string): { h: number; s: number } {
+  const r = parseInt(hexcol.slice(1, 3), 16) / 255
+  const g = parseInt(hexcol.slice(3, 5), 16) / 255
+  const b = parseInt(hexcol.slice(5, 7), 16) / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  const d = max - min
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1))
+  let h = 0
+  if (d > 0) {
+    if (max === r) h = ((g - b) / d) % 6
+    else if (max === g) h = (b - r) / d + 2
+    else h = (r - g) / d + 4
+    h *= 60
+    if (h < 0) h += 360
+  }
+  return { h, s }
+}
+
+// the colour that visually dominates a (type, palette) combination
+function toneOf(type: number, palette: number): { h: number; s: number } {
+  switch (type) {
+    case 0: return hexToHs(GAS[palette][2])
+    case 1: return hexToHs(EARTH[palette].sea[1])
+    case 2: return hexToHs(ICE[palette][2])
+    case 3: return hexToHs(ROCK[palette][2])
+    case 4: return hexToHs(LAVA[palette][3])
+    case 5: return hexToHs(SUN[palette][2])
+    case 6: return hexToHs(NEUT[palette % NEUT.length][1])
+    default: return hexToHs(HOLE[palette][1])
+  }
+}
+
+const hueDist = (a: number, b: number) => {
+  const d = Math.abs(a - b) % 360
+  return d > 180 ? 360 - d : d
+}
+
+// pick the palette of `type` that sits closest to the anchor hue, drifting
+// up to one analogous step for variety; near-grey ramps act as wildcards
+function matchPalette(type: number, anchorHue: number, rnd: Rng): number {
+  const target = (anchorHue + [0, 0, -28, 28][Math.floor(rnd() * 4)] + 360) % 360
+  const count = type === 6 ? NEUT.length : 8
+  let best = 0
+  let bestD = Infinity
+  for (let i = 0; i < count; i++) {
+    const tone = toneOf(type, i)
+    const d = (tone.s < 0.18 ? 38 : hueDist(tone.h, target)) + rnd() * 8
+    if (d < bestD) {
+      bestD = d
+      best = i
+    }
+  }
+  return best
+}
+
 // True visual radius of a body in unscaled pixels — rings, rays, jets,
 // debris and companions included — so cosmos placement never clips or
 // crowds a world's furthest-reaching feature.
@@ -628,12 +687,18 @@ export function renderSpace(canvas: PixelCanvas, p: WorldParams) {
   ctx.fillRect(0, 0, W, H)
   drawStarfield(put, rnd, W, H)
 
-  // featured world plus neighbours, larger bodies placed first
+  // featured world plus neighbours, larger bodies placed first; neighbour
+  // palettes are colour-matched to the featured world's dominant hue so the
+  // scene reads as one sky (a grey featured world anchors on a seeded hue)
+  const anchor = toneOf(p.type, p.palette)
+  const anchorHue = anchor.s < 0.18 ? rnd() * 360 : anchor.h
   const spots = [{ p, scale: 0.62 }]
   const neighbours = 2 + Math.floor(rnd() * 3)
   for (let i = 0; i < neighbours; i++) {
     const v = Math.floor(rnd() * 2 ** 17) * 2 ** 16 + Math.floor(rnd() * 2 ** 16)
-    spots.push({ p: unpack(v), scale: 0.34 + rnd() * 0.16 })
+    const raw = unpack(v)
+    raw.palette = matchPalette(raw.type, anchorHue, rnd)
+    spots.push({ p: unpack(pack(raw)), scale: 0.34 + rnd() * 0.16 })
   }
   spots.splice(1, spots.length, ...spots.slice(1).sort((a, b) => b.scale - a.scale))
 
