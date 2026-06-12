@@ -9,15 +9,33 @@ import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderScene, BG } from '../src/gen/render.js'
-import { pack, unpack, mulberry32 } from '../src/gen/seed.js'
+import { renderScene, BG, type PixelCanvas } from '../src/gen/render.ts'
+import { pack, unpack, mulberry32, type WorldParams } from '../src/gen/seed.ts'
+
+type WorldSpec = Omit<WorldParams, 'packed'>
+type RGB = [number, number, number]
+
+interface Scene {
+  center: [number, number]
+  scale: number
+  p: WorldSpec
+}
+
+interface ComposeSpec {
+  W: number
+  H: number
+  scenes: Scene[]
+  title: string
+  titleY: number
+  titleScale: number
+}
 
 const TILE = 96
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 // --- curated worlds ----------------------------------------------------------
 
-const WORLDS = {
+const WORLDS: Record<string, WorldSpec> = {
   sun: { type: 5, palette: 0, size: 6, rings: 0, ringStyle: 0, companion: 0, decay: 0, feature: 3, detail: 7777 },
   neutron: { type: 6, palette: 2, size: 4, rings: 0, ringStyle: 1, companion: 0, decay: 0, feature: 2, detail: 61234 },
   gas: { type: 0, palette: 2, size: 7, rings: 2, ringStyle: 1, companion: 0, decay: 0, feature: 3, detail: 31337 },
@@ -31,19 +49,19 @@ const WORLDS = {
 
 // --- helpers -------------------------------------------------------------------
 
-function hex(c) {
+function hex(c: string): RGB {
   return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]
 }
 
 // fake 2d context: renders a 96x96 scene into a flat RGB buffer
-function renderTile(params) {
+function renderTile(params: WorldParams): Uint8Array {
   const buf = new Uint8Array(TILE * TILE * 3)
-  let fill = [0, 0, 0]
+  let fill: RGB = [0, 0, 0]
   const ctx = {
-    set fillStyle(c) {
-      fill = hex(c)
+    set fillStyle(c: string | CanvasGradient | CanvasPattern) {
+      fill = hex(c as string)
     },
-    fillRect(x, y, w, h) {
+    fillRect(x: number, y: number, w: number, h: number) {
       for (let yy = y; yy < y + h; yy++) {
         for (let xx = x; xx < x + w; xx++) {
           if (xx < 0 || yy < 0 || xx >= TILE || yy >= TILE) continue
@@ -55,11 +73,12 @@ function renderTile(params) {
       }
     },
   }
-  renderScene({ getContext: () => ctx, width: TILE, height: TILE }, params)
+  const canvas: PixelCanvas = { width: TILE, height: TILE, getContext: () => ctx }
+  renderScene(canvas, params)
   return buf
 }
 
-const GLYPHS = {
+const GLYPHS: Record<string, string[]> = {
   P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
   I: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '#####'],
   X: ['#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#'],
@@ -80,10 +99,10 @@ const BAYER = [
 
 // --- scene composer --------------------------------------------------------------
 
-function compose({ W, H, scenes, title, titleY, titleScale }) {
+function compose({ W, H, scenes, title, titleY, titleScale }: ComposeSpec) {
   const img = new Uint8Array(W * H * 3)
 
-  const set = (x, y, [r, g, b]) => {
+  const set = (x: number, y: number, [r, g, b]: RGB | number[]) => {
     if (x < 0 || y < 0 || x >= W || y >= H) return
     const i = (y * W + x) * 3
     img[i] = r
@@ -136,7 +155,7 @@ function compose({ W, H, scenes, title, titleY, titleScale }) {
   }
 
   // composite the worlds (chroma-key each tile's flat background)
-  const seeds = []
+  const seeds: string[] = []
   for (const { center, scale, p } of scenes) {
     const params = unpack(pack(p))
     seeds.push(params.packed.toString(36).padStart(7, '0'))
@@ -160,7 +179,7 @@ function compose({ W, H, scenes, title, titleY, titleScale }) {
 
   // pixel-font title
   if (title) {
-    const drawText = (x0, y0, s, color) => {
+    const drawText = (x0: number, y0: number, s: number, color: RGB) => {
       let cx = x0
       for (const ch of title) {
         const g = GLYPHS[ch]
@@ -195,13 +214,13 @@ const CRC_TABLE = new Int32Array(256).map((_, n) => {
   return c
 })
 
-function crc32(buf) {
+function crc32(buf: Buffer): number {
   let c = -1
   for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8)
   return (c ^ -1) >>> 0
 }
 
-function chunk(type, data) {
+function chunk(type: string, data: Buffer): Buffer {
   const out = Buffer.alloc(12 + data.length)
   out.writeUInt32BE(data.length, 0)
   out.write(type, 4, 'ascii')
@@ -210,7 +229,7 @@ function chunk(type, data) {
   return out
 }
 
-function writePng(path, img, W, H) {
+function writePng(path: string, img: Uint8Array, W: number, H: number) {
   const ihdr = Buffer.alloc(13)
   ihdr.writeUInt32BE(W, 0)
   ihdr.writeUInt32BE(H, 4)

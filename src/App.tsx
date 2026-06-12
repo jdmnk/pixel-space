@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from './gen/seed.js'
-import { renderScene, renderSpace } from './gen/render.js'
+import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from './gen/seed.ts'
+import { renderScene, renderSpace } from './gen/render.ts'
 
-function useSceneCanvas(seed, mode = 'world') {
-  const ref = useRef(null)
+type SceneMode = 'world' | 'cosmos'
+
+function useSceneCanvas(seed: string, mode: SceneMode = 'world') {
+  const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
     if (!ref.current) return
     const params = decodeSeed(seed)
@@ -24,7 +26,7 @@ function Generator() {
   const [seed, setSeed] = useState(randomSeed)
   const [field, setField] = useState(seed)
   const [seedOpen, setSeedOpen] = useState(true)
-  const [mode, setMode] = useState('world')
+  const [mode, setMode] = useState<SceneMode>('world')
   const canvasRef = useSceneCanvas(seed, mode)
   const params = decodeSeed(seed)
 
@@ -36,7 +38,7 @@ function Generator() {
 
   const ringCount =
     params.type <= 4 ? [0, 1, 1, 2][params.rings] : params.type === 7 ? (params.rings >= 2 ? 2 : 1) : null
-  const traits = [
+  const traits: [string, string][] = [
     ['type', TYPE_NAMES[params.type]],
     ['size', `${params.size + 1} / 8`],
     ['palette', `${params.palette + 1} / 8`],
@@ -83,7 +85,7 @@ function Generator() {
         </button>
       </div>
 
-      <details className="seedbox" open={seedOpen} onToggle={(e) => setSeedOpen(e.target.open)}>
+      <details className="seedbox" open={seedOpen} onToggle={(e) => setSeedOpen(e.currentTarget.open)}>
         <summary>seed</summary>
         <div className="seedrow">
           <input
@@ -122,7 +124,7 @@ function Gallery() {
   )
 }
 
-function Tile({ seed }) {
+function Tile({ seed }: { seed: string }) {
   const ref = useSceneCanvas(seed)
   return <canvas ref={ref} width={96} height={96} title={seed} />
 }

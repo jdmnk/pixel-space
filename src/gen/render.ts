@@ -1,17 +1,39 @@
-import { mulberry32, unpack } from './seed.js'
+import { mulberry32, unpack, type WorldParams } from './seed.ts'
 
 const TAU = Math.PI * 2
 
+// Minimal canvas surface the renderer needs — satisfied by a real
+// HTMLCanvasElement and by the fake pixel-capture canvas in scripts/hero.ts
+export interface PixelContext {
+  fillStyle: string | CanvasGradient | CanvasPattern
+  fillRect(x: number, y: number, w: number, h: number): void
+}
+export interface PixelCanvas {
+  width: number
+  height: number
+  getContext(contextId: '2d'): PixelContext | null
+}
+
+export interface RenderOpts {
+  cx?: number
+  cy?: number
+  scale?: number
+  bare?: boolean
+}
+
+type Put = (x: number, y: number, c: string) => void
+type Rng = () => number
+
 // --- deterministic value noise -------------------------------------------
 
-function hash2(ix, iy, seed) {
+function hash2(ix: number, iy: number, seed: number): number {
   let h = (Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(seed | 0, 1442695041)) | 0
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
-const smooth = (t) => t * t * (3 - 2 * t)
+const smooth = (t: number) => t * t * (3 - 2 * t)
 
-function noise2(x, y, seed) {
+function noise2(x: number, y: number, seed: number): number {
   const ix = Math.floor(x)
   const iy = Math.floor(y)
   const fx = smooth(x - ix)
@@ -23,11 +45,11 @@ function noise2(x, y, seed) {
   return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy
 }
 
-function fbm(x, y, seed) {
+function fbm(x: number, y: number, seed: number): number {
   return noise2(x, y, seed) * 0.65 + noise2(x * 2.3 + 17.3, y * 2.3 + 9.1, seed ^ 0x9e37) * 0.35
 }
 
-const clamp = (v, a, b) => (v < a ? a : v > b ? b : v)
+const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v)
 
 // --- palettes (dark -> light) ----------------------------------------------
 
@@ -125,7 +147,7 @@ const RING_COLORS = [
 
 export const BG = ['#171e38', '#1a2347', '#131a30', '#1f1a38']
 
-function rampFor(type, palette) {
+function rampFor(type: number, palette: number): string[] {
   switch (type) {
     case 0: return GAS[palette]
     case 1: { const e = EARTH[palette]; return [e.sea[0], e.sea[1], e.land[0], e.land[1], e.land[2]] }
@@ -140,8 +162,9 @@ function rampFor(type, palette) {
 
 // opts: { cx, cy, scale, bare } — bare skips background + starfield so a
 // body can be composed onto a larger scene (see renderSpace below)
-export function renderScene(canvas, p, opts = {}) {
+export function renderScene(canvas: PixelCanvas, p: WorldParams, opts: RenderOpts = {}) {
   const ctx = canvas.getContext('2d')
+  if (!ctx) return
   const W = canvas.width
   const H = canvas.height
   const CX = opts.cx ?? W >> 1
@@ -150,7 +173,7 @@ export function renderScene(canvas, p, opts = {}) {
   const rnd = mulberry32(((p.packed >>> 0) ^ Math.imul(Math.floor(p.packed / 65536), 2654435761)) >>> 0)
   const nseed = (Math.imul(p.detail, 2654435761) ^ Math.imul(p.palette + 1, 374761393) ^ p.type * 97) | 0
 
-  const put = (x, y, c) => {
+  const put: Put = (x, y, c) => {
     x |= 0; y |= 0
     if (x >= 0 && y >= 0 && x < W && y < H) {
       ctx.fillStyle = c
@@ -179,16 +202,17 @@ export function renderScene(canvas, p, opts = {}) {
   const ringRy = 0.3 + p.ringStyle * 0.05
 
   // crumbling-world mask: carve a ragged bite out of the disk
-  let mask = null
-  let decayDir = null
+  let mask: ((dx: number, dy: number) => boolean) | null = null
+  let decayDir: [number, number] | null = null
   if (p.decay && planetlike) {
     const a = rnd() * TAU
-    decayDir = [Math.cos(a), Math.sin(a)]
+    const dir: [number, number] = [Math.cos(a), Math.sin(a)]
+    decayDir = dir
     mask = (dx, dy) =>
-      dx * decayDir[0] + dy * decayDir[1] + (noise2(dx * 0.35 + 31, dy * 0.35 + 7, nseed ^ 77) - 0.5) * 9 < R * 0.5
+      dx * dir[0] + dy * dir[1] + (noise2(dx * 0.35 + 31, dy * 0.35 + 7, nseed ^ 77) - 0.5) * 9 < R * 0.5
   }
 
-  const shadeOff = (nx, ny, x, y) => {
+  const shadeOff = (nx: number, ny: number, x: number, y: number): number => {
     const light = -(nx + ny) * 0.55 + ((x + y) & 1 ? 0.06 : 0)
     if (light > 0.45) return 1
     if (light > -0.15) return 0
@@ -196,7 +220,7 @@ export function renderScene(canvas, p, opts = {}) {
     return -2
   }
 
-  function drawRings(front) {
+  function drawRings(front: boolean) {
     if (!ringCount) return
     const [dark, light] = RING_COLORS[p.ringStyle]
     for (let y = 0; y < H; y++) {
@@ -221,7 +245,10 @@ export function renderScene(canvas, p, opts = {}) {
     }
   }
 
-  function drawDisk(surface, outline) {
+  function drawDisk(
+    surface: (x: number, y: number, nx: number, ny: number, r: number) => string,
+    outline: string,
+  ) {
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const dx = x - CX
@@ -243,13 +270,13 @@ export function renderScene(canvas, p, opts = {}) {
   function drawGas() {
     const ramp = GAS[p.palette]
     const bands = 3 + p.feature
-    const pattern = []
+    const pattern: number[] = []
     for (let i = 0; i < bands + 3; i++) {
       let c = 1 + Math.floor(rnd() * 3.99)
       if (c === pattern[i - 1]) c = 1 + (c % 4)
       pattern.push(c)
     }
-    const spot = p.feature >= 2 ? [rnd() * 1.1 - 0.55, rnd() * 0.8 - 0.4] : null
+    const spot: [number, number] | null = p.feature >= 2 ? [rnd() * 1.1 - 0.55, rnd() * 0.8 - 0.4] : null
     drawDisk((x, y, nx, ny) => {
       const wob = (fbm(nx * 1.6 + 4.2, ny * 1.6, nseed) - 0.5) * 1.4
       const t = (ny * 0.5 + 0.5) * bands + wob
@@ -285,7 +312,7 @@ export function renderScene(canvas, p, opts = {}) {
   function drawIce() {
     const ramp = ICE[p.palette]
     // cracks: a few jagged random walks across the surface
-    const cracks = new Set()
+    const cracks = new Set<number>()
     const walks = 2 + (p.feature >> 1)
     for (let i = 0; i < walks; i++) {
       let wx = CX + (rnd() - 0.5) * R * 1.2
@@ -309,7 +336,7 @@ export function renderScene(canvas, p, opts = {}) {
 
   function drawMoon() {
     const ramp = ROCK[p.palette]
-    const craters = []
+    const craters: [number, number, number][] = []
     const n = 3 + p.feature * 2
     for (let i = 0; i < n; i++) {
       const a = rnd() * TAU
@@ -366,7 +393,7 @@ export function renderScene(canvas, p, opts = {}) {
       }
     }
     // rays — roughly proportional to the body so big suns shine far
-    const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+    const dirs: [number, number][] = [[1, 0], [-1, 0], [0, 1], [0, -1]]
     if (p.feature >= 2) dirs.push([0.707, 0.707], [-0.707, 0.707], [0.707, -0.707], [-0.707, -0.707])
     const len = Math.round(R * 0.55) + 2
     for (const [ux, uy] of dirs) {
@@ -443,7 +470,7 @@ export function renderScene(canvas, p, opts = {}) {
     const disks = p.rings >= 2 ? 2 : 1
     const thick = p.feature >= 2 ? 4.4 : 2.9
     const rx0 = R * 1.9
-    const disk = (front) => {
+    const disk = (front: boolean) => {
       for (let y = 0; y < H; y++) {
         const dy = y - CY
         if (front ? dy < 0 : dy >= 0) continue
@@ -458,7 +485,7 @@ export function renderScene(canvas, p, opts = {}) {
             const w = (thick / rx) * (d ? 0.55 : 1)
             if (Math.abs(q - 1) < w) {
               const inner = Math.abs(q - 1) < w * 0.45
-              let col
+              let col: string
               if (d > 0) col = front ? acc[1] : acc[0]
               else if (front) col = inner ? hot : acc[2]
               else col = inner ? acc[2] : acc[1]
@@ -522,8 +549,8 @@ export function renderScene(canvas, p, opts = {}) {
     for (let i = 0; i < n; i++) {
       const d = R * (0.78 + rnd() * 1.15)
       const lat = (rnd() - 0.5) * R * 1.3
-      const x = CX + decayDir[0] * d - decayDir[1] * lat
-      const y = CY + decayDir[1] * d + decayDir[0] * lat
+      const x = CX + decayDir![0] * d - decayDir![1] * lat
+      const y = CY + decayDir![1] * d + decayDir![0] * lat
       const size = rnd() < 0.6 ? 1 : 2
       ctx.fillStyle = ramp[1 + Math.floor(rnd() * 3)]
       ctx.fillRect(x | 0, y | 0, size, size)
@@ -554,15 +581,42 @@ export function renderScene(canvas, p, opts = {}) {
   }
 }
 
+// True visual radius of a body in unscaled pixels — rings, rays, jets,
+// debris and companions included — so cosmos placement never clips or
+// crowds a world's furthest-reaching feature.
+function bodyExtent(p: WorldParams): number {
+  const base =
+    p.type <= 4
+      ? 13 + p.size * 1.5
+      : p.type === 5
+        ? 15 + p.size
+        : p.type === 6
+          ? 5 + (p.size >> 1)
+          : 9 + p.size
+  if (p.type <= 4) {
+    let e = base + 1
+    const rc = [0, 1, 1, 2][p.rings]
+    if (rc) e = base * 1.55 + 3 + (rc - 1) * 5 + 2
+    if (p.decay) e = Math.max(e, base * 1.95)
+    if (p.companion) e += 15
+    return e
+  }
+  if (p.type === 5) return base * 1.66 + 4 // corona rays
+  if (p.type === 6) return Math.max(base * (p.feature >= 2 ? 3.7 : 2.7), base + 16 + p.size * 2) // pulse rings vs jets
+  return Math.max(base * 1.9 + (p.rings >= 2 ? 7 : 0) + 2, p.decay ? base * 2.6 : 0) // disk vs jets
+}
+
 // Cosmos mode: the seed's own world plus a handful of deterministic
-// neighbours, scattered across a wider sky. Same seed, same cosmos.
-export function renderSpace(canvas, p) {
+// neighbours, spaced out with best-candidate sampling so the sky reads
+// as one cohesive scene. Same seed, same cosmos.
+export function renderSpace(canvas: PixelCanvas, p: WorldParams) {
   const ctx = canvas.getContext('2d')
+  if (!ctx) return
   const W = canvas.width
   const H = canvas.height
   const rnd = mulberry32(((p.packed >>> 0) ^ 0x9e3779b9) >>> 0)
 
-  const put = (x, y, c) => {
+  const put: Put = (x, y, c) => {
     x |= 0; y |= 0
     if (x >= 0 && y >= 0 && x < W && y < H) {
       ctx.fillStyle = c
@@ -574,36 +628,50 @@ export function renderSpace(canvas, p) {
   ctx.fillRect(0, 0, W, H)
   drawStarfield(put, rnd, W, H)
 
-  const placed = []
-  const place = (scale) => {
-    const ext = 32 * scale
-    for (let t = 0; t < 60; t++) {
-      const x = ext + rnd() * (W - ext * 2)
-      const y = ext + rnd() * (H - ext * 2)
-      if (placed.every((b) => Math.hypot(b.x - x, b.y - y) > b.ext + ext)) {
-        placed.push({ x, y, ext })
-        return { x, y }
-      }
-    }
-    return null
-  }
-
-  // the featured world first, biggest
-  const spots = [{ p, scale: 0.65 }]
+  // featured world plus neighbours, larger bodies placed first
+  const spots = [{ p, scale: 0.62 }]
   const neighbours = 2 + Math.floor(rnd() * 3)
   for (let i = 0; i < neighbours; i++) {
     const v = Math.floor(rnd() * 2 ** 17) * 2 ** 16 + Math.floor(rnd() * 2 ** 16)
-    spots.push({ p: unpack(v), scale: 0.36 + rnd() * 0.18 })
+    spots.push({ p: unpack(v), scale: 0.34 + rnd() * 0.16 })
   }
+  spots.splice(1, spots.length, ...spots.slice(1).sort((a, b) => b.scale - a.scale))
 
-  for (const { p: body, scale } of spots) {
-    const pos = place(scale)
-    if (!pos) continue
-    renderScene(canvas, body, { cx: Math.round(pos.x), cy: Math.round(pos.y), scale, bare: true })
-  }
+  const placed: { x: number; y: number; ext: number }[] = []
+  spots.forEach(({ p: body, scale }, idx) => {
+    // visual extent in scene pixels, clamped so margins stay sane
+    const ext = Math.min((bodyExtent(body) + 2) * scale, Math.min(W, H) * 0.42)
+    // best-candidate sampling: take the spot with the most breathing room
+    let bestX = 0
+    let bestY = 0
+    let bestScore = -Infinity
+    for (let t = 0; t < 28; t++) {
+      const x = ext + rnd() * (W - ext * 2)
+      const y = ext + rnd() * (H - ext * 2)
+      let score
+      if (idx === 0) {
+        // the featured world anchors the scene near the centre
+        score = -Math.hypot(x - W / 2, y - H / 2)
+      } else {
+        score = Infinity
+        for (const b of placed) score = Math.min(score, Math.hypot(b.x - x, b.y - y) - b.ext - ext)
+        // gentle pull away from the edges keeps the composition balanced
+        score = Math.min(score * 1.5, score + Math.min(x - ext, y - ext, W - ext - x, H - ext - y))
+      }
+      if (score > bestScore) {
+        bestScore = score
+        bestX = x
+        bestY = y
+      }
+    }
+    // skip a neighbour that simply cannot fit without overlap
+    if (idx > 0 && bestScore < 1) return
+    placed.push({ x: bestX, y: bestY, ext })
+    renderScene(canvas, body, { cx: Math.round(bestX), cy: Math.round(bestY), scale, bare: true })
+  })
 }
 
-function drawStarfield(put, rnd, W, H) {
+function drawStarfield(put: Put, rnd: Rng, W: number, H: number) {
   const cx = W / 2
   const cy = H / 2
   const dots = ['#39456e', '#56689c', '#aab6e0', '#e8ecfa']

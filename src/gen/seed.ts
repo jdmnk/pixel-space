@@ -4,7 +4,22 @@
 // `detail` drives all surface noise, so mutating it slightly yields a sibling
 // of the same world instead of a brand new one.
 
-const FIELDS = [
+export interface WorldParams {
+  packed: number
+  type: number
+  palette: number
+  size: number
+  rings: number
+  ringStyle: number
+  companion: number
+  decay: number
+  feature: number
+  detail: number
+}
+
+type FieldName = Exclude<keyof WorldParams, 'packed'>
+
+const FIELDS: [FieldName, number][] = [
   ['type', 3],
   ['palette', 3],
   ['size', 3],
@@ -29,7 +44,7 @@ export const TYPE_NAMES = [
   'black hole',
 ]
 
-export function mulberry32(a) {
+export function mulberry32(a: number): () => number {
   return function () {
     a |= 0
     a = (a + 0x6d2b79f5) | 0
@@ -39,8 +54,8 @@ export function mulberry32(a) {
   }
 }
 
-export function unpack(value) {
-  const p = { packed: value }
+export function unpack(value: number): WorldParams {
+  const p = { packed: value } as WorldParams
   let shift = 0
   for (const [name, bits] of FIELDS) {
     p[name] = Math.floor(value / 2 ** shift) % 2 ** bits
@@ -49,7 +64,7 @@ export function unpack(value) {
   return p
 }
 
-export function pack(p) {
+export function pack(p: Omit<WorldParams, 'packed'>): number {
   let value = 0
   let shift = 0
   for (const [name, bits] of FIELDS) {
@@ -59,9 +74,9 @@ export function pack(p) {
   return value
 }
 
-const encode = (value) => value.toString(36).padStart(7, '0')
+const encode = (value: number) => value.toString(36).padStart(7, '0')
 
-function hashString(str) {
+function hashString(str: string): number {
   let h1 = 1779033703 ^ str.length
   let h2 = 3144134277
   for (let i = 0; i < str.length; i++) {
@@ -75,24 +90,24 @@ function hashString(str) {
   return ((h2 % 2) * 2 ** 32 + h1) % MAX
 }
 
-function valueFromInput(str) {
+function valueFromInput(str: string): number {
   const s = str.trim().toLowerCase()
   if (/^[0-9a-z]{1,7}$/.test(s)) return parseInt(s, 36) % MAX
   return hashString(s)
 }
 
 // Any text becomes a valid seed; canonical seeds round-trip unchanged.
-export const canonicalSeed = (str) => encode(valueFromInput(str))
+export const canonicalSeed = (str: string): string => encode(valueFromInput(str))
 
-export const decodeSeed = (str) => unpack(valueFromInput(str))
+export const decodeSeed = (str: string): WorldParams => unpack(valueFromInput(str))
 
-export function randomSeed() {
+export function randomSeed(): string {
   return encode(Math.floor(Math.random() * MAX))
 }
 
-const randInt = (n) => Math.floor(Math.random() * n)
+const randInt = (n: number) => Math.floor(Math.random() * n)
 
-export function mutateSeed(str) {
+export function mutateSeed(str: string): string {
   const p = unpack(valueFromInput(str))
   const before = pack(p)
   // always jiggle the surface noise a little

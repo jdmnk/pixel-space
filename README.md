@@ -10,6 +10,7 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-f4a8bc?style=for-the-badge)](LICENSE)
 [![React 18](https://img.shields.io/badge/react-18-b8e6c9?style=for-the-badge&logo=react&logoColor=2b2b3a)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/typescript-strict-aecbfa?style=for-the-badge&logo=typescript&logoColor=2b2b3a)](https://www.typescriptlang.org)
 [![Vite 5](https://img.shields.io/badge/vite-5-c9b8e6?style=for-the-badge&logo=vite&logoColor=2b2b3a)](https://vitejs.dev)
 [![runtime deps](https://img.shields.io/badge/renderer_deps-zero-f9d29d?style=for-the-badge)](#-how-a-world-fits-in-7-characters)
 
@@ -121,12 +122,12 @@ Paste any of these into the seed field — they're the exact worlds from the her
 ```
 src/
   gen/
-    seed.js     ← pack · unpack · mutate · hash — all seed logic
-    render.js   ← deterministic pixel renderer (world + cosmos), zero deps
-  App.jsx       ← UI: generator, mode switch, hidden gallery
+    seed.ts     ← pack · unpack · mutate · hash — all seed logic
+    render.ts   ← deterministic pixel renderer (world + cosmos), zero deps
+  App.tsx       ← UI: generator, mode switch, hidden gallery
   styles.css    ← pastel pixel-toy aesthetic
 scripts/
-  hero.js       ← paints docs/preview.png + public/og.png with the app's own renderer
+  hero.ts       ← paints docs/preview.png + public/og.png with the app's own renderer
 public/
   og.png        ← 1200×630 social share card (generated)
 ```
