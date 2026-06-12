@@ -122,7 +122,7 @@ const RING_COLORS = [
   ['#6e6e8a', '#d0d0ec'],
 ]
 
-const BG = ['#171e38', '#1a2347', '#131a30', '#1f1a38']
+export const BG = ['#171e38', '#1a2347', '#131a30', '#1f1a38']
 
 function rampFor(type, palette) {
   switch (type) {
