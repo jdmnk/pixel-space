@@ -1,8 +1,5 @@
-import { mulberry32 } from './seed.js'
+import { mulberry32, unpack } from './seed.js'
 
-const S = 96
-const CX = 48
-const CY = 48
 const TAU = Math.PI * 2
 
 // --- deterministic value noise -------------------------------------------
@@ -141,32 +138,41 @@ function rampFor(type, palette) {
 
 // --- main ------------------------------------------------------------------
 
-export function renderScene(canvas, p) {
+// opts: { cx, cy, scale, bare } — bare skips background + starfield so a
+// body can be composed onto a larger scene (see renderSpace below)
+export function renderScene(canvas, p, opts = {}) {
   const ctx = canvas.getContext('2d')
+  const W = canvas.width
+  const H = canvas.height
+  const CX = opts.cx ?? W >> 1
+  const CY = opts.cy ?? H >> 1
+  const mul = opts.scale ?? 1
   const rnd = mulberry32(((p.packed >>> 0) ^ Math.imul(Math.floor(p.packed / 65536), 2654435761)) >>> 0)
   const nseed = (Math.imul(p.detail, 2654435761) ^ Math.imul(p.palette + 1, 374761393) ^ p.type * 97) | 0
 
   const put = (x, y, c) => {
     x |= 0; y |= 0
-    if (x >= 0 && y >= 0 && x < S && y < S) {
+    if (x >= 0 && y >= 0 && x < W && y < H) {
       ctx.fillStyle = c
       ctx.fillRect(x, y, 1, 1)
     }
   }
 
-  // background + starfield
-  ctx.fillStyle = BG[p.packed % 4]
-  ctx.fillRect(0, 0, S, S)
-  drawStarfield(put, rnd)
+  if (!opts.bare) {
+    ctx.fillStyle = BG[p.packed % 4]
+    ctx.fillRect(0, 0, W, H)
+    drawStarfield(put, rnd, W, H)
+  }
 
   const planetlike = p.type <= 4
-  const R = planetlike
-    ? 13 + p.size * 1.5
-    : p.type === 5
-      ? 15 + p.size
-      : p.type === 6
-        ? 5 + (p.size >> 1)
-        : 9 + p.size
+  const R =
+    (planetlike
+      ? 13 + p.size * 1.5
+      : p.type === 5
+        ? 15 + p.size
+        : p.type === 6
+          ? 5 + (p.size >> 1)
+          : 9 + p.size) * mul
 
   const ringCount = planetlike ? [0, 1, 1, 2][p.rings] : 0
   const ringRx = R * 1.55 + 3
@@ -193,10 +199,10 @@ export function renderScene(canvas, p) {
   function drawRings(front) {
     if (!ringCount) return
     const [dark, light] = RING_COLORS[p.ringStyle]
-    for (let y = 0; y < S; y++) {
+    for (let y = 0; y < H; y++) {
       const dy = y - CY
       if (front ? dy < 0 : dy >= 0) continue
-      for (let x = 0; x < S; x++) {
+      for (let x = 0; x < W; x++) {
         const dx = x - CX
         for (let i = 0; i < ringCount; i++) {
           const rx = ringRx + i * 5
@@ -216,8 +222,8 @@ export function renderScene(canvas, p) {
   }
 
   function drawDisk(surface, outline) {
-    for (let y = 0; y < S; y++) {
-      for (let x = 0; x < S; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
         const dx = x - CX
         const dy = y - CY
         const r = Math.sqrt(dx * dx + dy * dy)
@@ -341,8 +347,8 @@ export function renderScene(canvas, p) {
 
   function drawSun() {
     const ramp = SUN[p.palette]
-    for (let y = 0; y < S; y++) {
-      for (let x = 0; x < S; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
         const dx = x - CX
         const dy = y - CY
         const r = Math.sqrt(dx * dx + dy * dy)
@@ -385,8 +391,8 @@ export function renderScene(canvas, p) {
 
   function drawNeutron() {
     const ramp = NEUT[p.palette % NEUT.length]
-    for (let y = 0; y < S; y++) {
-      for (let x = 0; x < S; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
         const dx = x - CX
         const dy = y - CY
         const r = Math.sqrt(dx * dx + dy * dy)
@@ -399,7 +405,7 @@ export function renderScene(canvas, p) {
     }
     // polar jets
     const ja = ((p.ringStyle * 45 + 22.5) * Math.PI) / 180
-    const len = 15 + p.size * 2
+    const len = (15 + p.size * 2) * mul
     for (const sgn of [1, -1]) {
       const ux = Math.cos(ja) * sgn
       const uy = Math.sin(ja) * sgn
@@ -438,10 +444,10 @@ export function renderScene(canvas, p) {
     const thick = p.feature >= 2 ? 4.4 : 2.9
     const rx0 = R * 1.9
     const disk = (front) => {
-      for (let y = 0; y < S; y++) {
+      for (let y = 0; y < H; y++) {
         const dy = y - CY
         if (front ? dy < 0 : dy >= 0) continue
-        for (let x = 0; x < S; x++) {
+        for (let x = 0; x < W; x++) {
           const dx = x - CX
           for (let d = 0; d < disks; d++) {
             const rx = rx0 + d * 7
@@ -465,8 +471,8 @@ export function renderScene(canvas, p) {
       }
     }
     disk(false)
-    for (let y = 0; y < S; y++) {
-      for (let x = 0; x < S; x++) {
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
         const dx = x - CX
         const dy = y - CY
         const r = Math.sqrt(dx * dx + dy * dy)
@@ -528,8 +534,8 @@ export function renderScene(canvas, p) {
   if (p.companion) {
     const a = rnd() * TAU
     const dist = Math.max(R, ringCount ? ringRx + 5 : 0) + 9 + rnd() * 4
-    const x = clamp(Math.round(CX + Math.cos(a) * dist), 7, S - 8)
-    const y = clamp(Math.round(CY + Math.sin(a) * dist * 0.85), 7, S - 8)
+    const x = clamp(Math.round(CX + Math.cos(a) * dist), 7, W - 8)
+    const y = clamp(Math.round(CY + Math.sin(a) * dist * 0.85), 7, H - 8)
     const warm = p.detail & 1
     const core = warm ? '#fff6c8' : '#e8f8ff'
     const arm = warm ? '#ffd98a' : '#9cd4f0'
@@ -548,20 +554,72 @@ export function renderScene(canvas, p) {
   }
 }
 
-function drawStarfield(put, rnd) {
+// Cosmos mode: the seed's own world plus a handful of deterministic
+// neighbours, scattered across a wider sky. Same seed, same cosmos.
+export function renderSpace(canvas, p) {
+  const ctx = canvas.getContext('2d')
+  const W = canvas.width
+  const H = canvas.height
+  const rnd = mulberry32(((p.packed >>> 0) ^ 0x9e3779b9) >>> 0)
+
+  const put = (x, y, c) => {
+    x |= 0; y |= 0
+    if (x >= 0 && y >= 0 && x < W && y < H) {
+      ctx.fillStyle = c
+      ctx.fillRect(x, y, 1, 1)
+    }
+  }
+
+  ctx.fillStyle = BG[p.packed % 4]
+  ctx.fillRect(0, 0, W, H)
+  drawStarfield(put, rnd, W, H)
+
+  const placed = []
+  const place = (scale) => {
+    const ext = 32 * scale
+    for (let t = 0; t < 60; t++) {
+      const x = ext + rnd() * (W - ext * 2)
+      const y = ext + rnd() * (H - ext * 2)
+      if (placed.every((b) => Math.hypot(b.x - x, b.y - y) > b.ext + ext)) {
+        placed.push({ x, y, ext })
+        return { x, y }
+      }
+    }
+    return null
+  }
+
+  // the featured world first, biggest
+  const spots = [{ p, scale: 0.65 }]
+  const neighbours = 2 + Math.floor(rnd() * 3)
+  for (let i = 0; i < neighbours; i++) {
+    const v = Math.floor(rnd() * 2 ** 17) * 2 ** 16 + Math.floor(rnd() * 2 ** 16)
+    spots.push({ p: unpack(v), scale: 0.36 + rnd() * 0.18 })
+  }
+
+  for (const { p: body, scale } of spots) {
+    const pos = place(scale)
+    if (!pos) continue
+    renderScene(canvas, body, { cx: Math.round(pos.x), cy: Math.round(pos.y), scale, bare: true })
+  }
+}
+
+function drawStarfield(put, rnd, W, H) {
+  const cx = W / 2
+  const cy = H / 2
   const dots = ['#39456e', '#56689c', '#aab6e0', '#e8ecfa']
-  for (let i = 0; i < 26; i++) {
-    const x = Math.floor(rnd() * S)
-    const y = Math.floor(rnd() * S)
+  const count = Math.round((W * H) / 350)
+  for (let i = 0; i < count; i++) {
+    const x = Math.floor(rnd() * W)
+    const y = Math.floor(rnd() * H)
     const c = dots[Math.floor(rnd() * rnd() * 4)]
     put(x, y, c)
   }
   // a couple of + sparkles
-  const sparkles = 1 + Math.floor(rnd() * 2)
+  const sparkles = 1 + Math.floor(rnd() * 2) + Math.floor((W * H) / 9216) - 1
   for (let i = 0; i < sparkles; i++) {
-    const x = Math.floor(6 + rnd() * (S - 12))
-    const y = Math.floor(6 + rnd() * (S - 12))
-    if (Math.hypot(x - CX, y - CY) < 34) continue
+    const x = Math.floor(6 + rnd() * (W - 12))
+    const y = Math.floor(6 + rnd() * (H - 12))
+    if (W <= 96 && Math.hypot(x - cx, y - cy) < 34) continue
     put(x, y, '#ffffff')
     put(x - 1, y, '#9fb2e8')
     put(x + 1, y, '#9fb2e8')
@@ -572,11 +630,11 @@ function drawStarfield(put, rnd) {
   if (rnd() < 0.45) {
     const colors = ['#bfe8ff', '#ffe9a8', '#ffd7ef']
     const c = colors[Math.floor(rnd() * 3)]
-    let x = Math.floor(10 + rnd() * (S - 20))
-    let y = Math.floor(10 + rnd() * (S - 20))
-    if (Math.hypot(x - CX, y - CY) < 38) {
-      x = x < CX ? 12 : S - 13
-      y = y < CY ? 12 : S - 13
+    let x = Math.floor(10 + rnd() * (W - 20))
+    let y = Math.floor(10 + rnd() * (H - 20))
+    if (W <= 96 && Math.hypot(x - cx, y - cy) < 38) {
+      x = x < cx ? 12 : W - 13
+      y = y < cy ? 12 : H - 13
     }
     for (let k = -3; k <= 3; k++) {
       put(x + k, y, Math.abs(k) > 1 ? c : '#ffffff')

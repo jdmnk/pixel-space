@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from './gen/seed.js'
-import { renderScene } from './gen/render.js'
+import { renderScene, renderSpace } from './gen/render.js'
 
-function useSceneCanvas(seed) {
+function useSceneCanvas(seed, mode = 'world') {
   const ref = useRef(null)
   useEffect(() => {
-    if (ref.current) renderScene(ref.current, decodeSeed(seed))
-  }, [seed])
+    if (!ref.current) return
+    const params = decodeSeed(seed)
+    if (mode === 'cosmos') renderSpace(ref.current, params)
+    else renderScene(ref.current, params)
+  }, [seed, mode])
   return ref
 }
 
@@ -21,7 +24,8 @@ function Generator() {
   const [seed, setSeed] = useState(randomSeed)
   const [field, setField] = useState(seed)
   const [seedOpen, setSeedOpen] = useState(true)
-  const canvasRef = useSceneCanvas(seed)
+  const [mode, setMode] = useState('world')
+  const canvasRef = useSceneCanvas(seed, mode)
   const params = decodeSeed(seed)
 
   useEffect(() => setField(seed), [seed])
@@ -50,9 +54,23 @@ function Generator() {
 
       <h1 className="title">pixel space</h1>
 
-      <div className="frame" key={seed}>
+      <div className="modes" role="tablist" aria-label="scene mode">
+        <button className={mode === 'world' ? 'mode on' : 'mode'} onClick={() => setMode('world')}>
+          world
+        </button>
+        <button className={mode === 'cosmos' ? 'mode on' : 'mode'} onClick={() => setMode('cosmos')}>
+          cosmos
+        </button>
+      </div>
+
+      <div className="frame" key={seed + mode}>
         <div className="frame-inner">
-          <canvas ref={canvasRef} width={96} height={96} />
+          <canvas
+            ref={canvasRef}
+            width={mode === 'cosmos' ? 192 : 96}
+            height={mode === 'cosmos' ? 120 : 96}
+            className={mode === 'cosmos' ? 'wide' : ''}
+          />
         </div>
       </div>
 

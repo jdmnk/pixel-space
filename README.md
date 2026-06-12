@@ -31,6 +31,8 @@ Two buttons. That's the whole interface.
 | 🎲  | **generate** | rolls a completely new world                                |
 | 🧬  | **mutate**   | nudges the current one — same neighbourhood, different face |
 
+A **world / cosmos** switch picks the view: a single portrait of your world, or a wider sky where it hangs among a few deterministic neighbours. Same seed, same cosmos.
+
 Below them sits the **seed** panel: the current world's seed, its main traits (type, size, rings, …), and a field to load your own — paste anything: `1vxi380`, `banana`, your name. Arbitrary text hashes to a valid world; canonical seeds round-trip exactly. Same seed in, same pixels out. Forever.
 
 <br/>
@@ -82,11 +84,17 @@ npm run dev     # → http://localhost:5173
 
 No API keys. No backend. No config.
 
-| command         |                                                     |
-| --------------- | --------------------------------------------------- |
-| `npm run dev`   | start the toy                                       |
-| `npm run build` | production build → `dist/`                          |
-| `npm run hero`  | regenerate the README hero image from curated seeds |
+| command         |                                                        |
+| --------------- | ------------------------------------------------------ |
+| `npm run dev`   | start the toy                                          |
+| `npm run build` | production build → `dist/`                             |
+| `npm run hero`  | regenerate the README hero + social card from curated seeds |
+
+### deploy
+
+It's a static Vite site — one click puts it on Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjdmnk%2Fpixel-space)
 
 > **hidden gallery** — add `?gallery` to the URL for a grid of 48 random worlds at once.
 
@@ -114,11 +122,13 @@ Paste any of these into the seed field — they're the exact worlds from the her
 src/
   gen/
     seed.js     ← pack · unpack · mutate · hash — all seed logic
-    render.js   ← deterministic 96×96 pixel renderer, zero deps
-  App.jsx       ← UI: generator + hidden gallery
+    render.js   ← deterministic pixel renderer (world + cosmos), zero deps
+  App.jsx       ← UI: generator, mode switch, hidden gallery
   styles.css    ← pastel pixel-toy aesthetic
 scripts/
-  hero.js       ← paints docs/preview.png with the app's own renderer
+  hero.js       ← paints docs/preview.png + public/og.png with the app's own renderer
+public/
+  og.png        ← 1200×630 social share card (generated)
 ```
 
 <br/>

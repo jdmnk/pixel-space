@@ -97,6 +97,39 @@ canvas {
   image-rendering: pixelated;
 }
 
+canvas.wide {
+  width: min(88vw, 576px);
+}
+
+/* world / cosmos mode switch */
+.modes {
+  display: flex;
+}
+
+.mode {
+  font-family: inherit;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  background: var(--card);
+  border: 3px solid var(--ink);
+  padding: 5px 16px;
+  cursor: pointer;
+}
+
+.mode:first-child {
+  border-right-width: 0;
+}
+
+.mode.on {
+  background: #c9b8e6;
+  color: var(--ink);
+}
+
+.mode:hover:not(.on) {
+  color: var(--ink);
+}
+
 @keyframes pop {
   from {
     transform: scale(0.9);
