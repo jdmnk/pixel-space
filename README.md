@@ -2,11 +2,7 @@
 
 <div align="center">
 
-# ✦ pixel space ✦
-
-**roll a planet · mutate it · share its seed**
-
-<br/>
+# roll a planet · mutate it · share its seed
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-f4a8bc?style=for-the-badge)](LICENSE)
 [![React 18](https://img.shields.io/badge/react-18-b8e6c9?style=for-the-badge&logo=react&logoColor=2b2b3a)](https://react.dev)
