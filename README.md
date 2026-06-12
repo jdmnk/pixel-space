@@ -2,7 +2,11 @@
 
 <div align="center">
 
-# roll a planet · mutate it · share its seed
+# ✦ pixel space ✦
+
+**roll a planet · mutate it · share its seed**
+
+<br/>
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-f4a8bc?style=for-the-badge)](LICENSE)
 [![React 18](https://img.shields.io/badge/react-18-b8e6c9?style=for-the-badge&logo=react&logoColor=2b2b3a)](https://react.dev)
@@ -33,12 +37,12 @@ The **seed** panel shows the current seed and its traits, with a box to type you
 
 Eight body types, each with its own set of eight colour ramps to pull from:
 
-|     | type                                                      |     | type                                             |
-| --- | --------------------------------------------------------- | --- | ------------------------------------------------ |
-| 🪐  | **gas giant** — banded atmosphere, storm spots            | ☀️  | **star** — radiant corona, directional rays      |
-| 🌍  | **terran world** — oceans, continents, clouds, polar caps | 💫  | **neutron star** — pulsar jets and pulse rings   |
+|     | type                                                      |     | type                                                                |
+| --- | --------------------------------------------------------- | --- | ------------------------------------------------------------------- |
+| 🪐  | **gas giant** — banded atmosphere, storm spots            | ☀️  | **star** — radiant corona, directional rays                         |
+| 🌍  | **terran world** — oceans, continents, clouds, polar caps | 💫  | **neutron star** — pulsar jets and pulse rings                      |
 | 🧊  | **ice world** — frozen crust, cracked fault lines         | 🕳️  | **black hole** — tilted accretion disks, lensed light, feeding jets |
-| 🌑  | **moon** — cratered grey rock                             | 🌋  | **magma core** — lava veins through dark crust   |
+| 🌑  | **moon** — cratered grey rock                             | 🌋  | **magma core** — lava veins through dark crust                      |
 
 Any of them can also pick up **rings** (one or two, varied tilt), a small **companion star**, or a **deteriorating crust** that crumbles and sheds debris.
 
@@ -76,11 +80,11 @@ npm run dev     # → http://localhost:5173
 
 No keys, no backend, nothing to configure.
 
-| command         |                                                  |
-| --------------- | ------------------------------------------------ |
-| `npm run dev`   | start the toy                                    |
-| `npm run build` | production build into `dist/`                    |
-| `npm run hero`  | rebuild the hero and social card from set seeds  |
+| command         |                                                 |
+| --------------- | ----------------------------------------------- |
+| `npm run dev`   | start the toy                                   |
+| `npm run build` | production build into `dist/`                   |
+| `npm run hero`  | rebuild the hero and social card from set seeds |
 
 > Add `?gallery` to the URL for a grid of 48 random worlds.
 
