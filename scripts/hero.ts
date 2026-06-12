@@ -5,15 +5,14 @@
 //
 //   npm run hero
 
-import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderScene, BG, type PixelCanvas } from '../src/gen/render.ts'
+import { renderScene, BG } from '../src/gen/render.ts'
 import { pack, unpack, mulberry32, type WorldParams } from '../src/gen/seed.ts'
+import { createPixelCanvas, encodePng, hexToRgb as hex, type RGB } from '../src/gen/headless.ts'
 
 type WorldSpec = Omit<WorldParams, 'packed'>
-type RGB = [number, number, number]
 
 interface Scene {
   center: [number, number]
@@ -49,31 +48,9 @@ const WORLDS: Record<string, WorldSpec> = {
 
 // --- helpers -------------------------------------------------------------------
 
-function hex(c: string): RGB {
-  return [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]
-}
-
 // fake 2d context: renders a 96x96 scene into a flat RGB buffer
 function renderTile(params: WorldParams): Uint8Array {
-  const buf = new Uint8Array(TILE * TILE * 3)
-  let fill: RGB = [0, 0, 0]
-  const ctx = {
-    set fillStyle(c: string | CanvasGradient | CanvasPattern) {
-      fill = hex(c as string)
-    },
-    fillRect(x: number, y: number, w: number, h: number) {
-      for (let yy = y; yy < y + h; yy++) {
-        for (let xx = x; xx < x + w; xx++) {
-          if (xx < 0 || yy < 0 || xx >= TILE || yy >= TILE) continue
-          const i = (yy * TILE + xx) * 3
-          buf[i] = fill[0]
-          buf[i + 1] = fill[1]
-          buf[i + 2] = fill[2]
-        }
-      }
-    },
-  }
-  const canvas: PixelCanvas = { width: TILE, height: TILE, getContext: () => ctx }
+  const { canvas, pixels: buf } = createPixelCanvas(TILE, TILE)
   renderScene(canvas, params)
   return buf
 }
@@ -206,46 +183,8 @@ function compose({ W, H, scenes, title, titleY, titleScale }: ComposeSpec) {
   return { img, seeds }
 }
 
-// --- minimal PNG encoder ----------------------------------------------------------
-
-const CRC_TABLE = new Int32Array(256).map((_, n) => {
-  let c = n
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1
-  return c
-})
-
-function crc32(buf: Buffer): number {
-  let c = -1
-  for (const b of buf) c = CRC_TABLE[(c ^ b) & 0xff] ^ (c >>> 8)
-  return (c ^ -1) >>> 0
-}
-
-function chunk(type: string, data: Buffer): Buffer {
-  const out = Buffer.alloc(12 + data.length)
-  out.writeUInt32BE(data.length, 0)
-  out.write(type, 4, 'ascii')
-  data.copy(out, 8)
-  out.writeUInt32BE(crc32(out.subarray(4, 8 + data.length)), 8 + data.length)
-  return out
-}
-
 function writePng(path: string, img: Uint8Array, W: number, H: number) {
-  const ihdr = Buffer.alloc(13)
-  ihdr.writeUInt32BE(W, 0)
-  ihdr.writeUInt32BE(H, 4)
-  ihdr[8] = 8 // bit depth
-  ihdr[9] = 2 // truecolor RGB
-  const raw = Buffer.alloc(H * (1 + W * 3))
-  for (let y = 0; y < H; y++) {
-    raw[y * (1 + W * 3)] = 0 // filter: none
-    Buffer.from(img.buffer, y * W * 3, W * 3).copy(raw, y * (1 + W * 3) + 1)
-  }
-  const png = Buffer.concat([
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-    chunk('IHDR', ihdr),
-    chunk('IDAT', deflateSync(raw, { level: 9 })),
-    chunk('IEND', Buffer.alloc(0)),
-  ])
+  const png = encodePng(img, W, H)
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, png)
   console.log(`wrote ${path} (${(png.length / 1024).toFixed(1)} kB)`)

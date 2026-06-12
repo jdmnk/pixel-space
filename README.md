@@ -29,7 +29,7 @@ Two buttons. **Generate** rolls a new world; **mutate** nudges the current one s
 
 A **world / cosmos** toggle switches the view between your planet alone and a wider sky with a few neighbours, recoloured to match its palette so the scene hangs together.
 
-The **seed** panel shows the current seed and its traits, with a box to type your own. Any text works — `banana`, your name — it just gets hashed into a world. Same seed, same pixels.
+The **seed** panel shows the current seed and its traits, with a box to type your own. Any text works — `banana`, your name — it just gets hashed into a world. Same seed, same pixels. There's a share button as well: the link carries the seed, and its link preview is that exact world, drawn on the fly.
 
 <br/>
 

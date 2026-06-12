@@ -21,6 +21,13 @@ function useTheme(): [Theme, () => void] {
   return [theme, () => setTheme((t) => (t === 'light' ? 'dark' : 'light'))]
 }
 
+// open the world named in ?seed= if there is one, otherwise roll a fresh one
+function initialSeed(): string {
+  if (typeof window === 'undefined') return randomSeed()
+  const s = new URLSearchParams(window.location.search).get('seed')
+  return s ? canonicalSeed(s) : randomSeed()
+}
+
 function useSceneCanvas(seed: string, mode: SceneMode = 'world') {
   const ref = useRef<HTMLCanvasElement>(null)
   useEffect(() => {
@@ -40,18 +47,46 @@ export default function App() {
 }
 
 function Generator() {
-  const [seed, setSeed] = useState(randomSeed)
+  const [seed, setSeed] = useState(initialSeed)
   const [field, setField] = useState(seed)
   const [seedOpen, setSeedOpen] = useState(true)
   const [mode, setMode] = useState<SceneMode>('world')
   const [theme, toggleTheme] = useTheme()
+  const [shared, setShared] = useState(false)
   const canvasRef = useSceneCanvas(seed, mode)
   const params = decodeSeed(seed)
 
   useEffect(() => setField(seed), [seed])
 
+  // keep the address bar pointing at the current world, so a refresh or a
+  // copied URL reopens it
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('seed', seed)
+    window.history.replaceState(null, '', url)
+    setShared(false)
+  }, [seed])
+
   const load = () => {
     if (field.trim()) setSeed(canonicalSeed(field))
+  }
+
+  const share = async () => {
+    const url = `${window.location.origin}/s/${seed}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'pixel space', text: `pixel space · ${seed}`, url })
+      } catch {
+        /* user dismissed the share sheet */
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url)
+        setShared(true)
+      } catch {
+        /* clipboard unavailable */
+      }
+    }
   }
 
   const ringCount =
@@ -134,6 +169,9 @@ function Generator() {
             </li>
           ))}
         </ul>
+        <button className="share" onClick={share}>
+          {shared ? 'link copied ✦' : 'share this world ↗'}
+        </button>
       </details>
     </main>
   )

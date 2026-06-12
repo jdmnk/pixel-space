@@ -316,6 +316,23 @@ canvas.wide {
   }
 }
 
+.share {
+  display: block;
+  margin: 16px auto 2px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  color: var(--text-soft);
+  background: transparent;
+  border: 0;
+  padding: 4px 6px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.share:hover {
+  color: var(--pink-deep);
+}
+
 /* floating sparkle decorations */
 .deco {
   position: absolute;
