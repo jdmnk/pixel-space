@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from './gen/seed.ts'
-import { renderScene, renderSpace } from './gen/render.ts'
+import { TYPE_NAMES, canonicalSeed, decodeSeed, mutateSeed, randomSeed } from './gen/seed'
+import { renderScene, renderSpace } from './gen/render'
 
 type SceneMode = 'world' | 'cosmos'
 type Theme = 'light' | 'dark'

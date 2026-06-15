@@ -7,7 +7,7 @@
 // client bundle; only the type-only import from render.ts is shared.
 
 import { deflateSync } from 'node:zlib'
-import type { PixelCanvas, PixelContext } from './render.ts'
+import type { PixelCanvas, PixelContext } from './render'
 
 export type RGB = [number, number, number]
 

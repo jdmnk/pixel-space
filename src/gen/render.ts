@@ -1,4 +1,4 @@
-import { mulberry32, pack, unpack, type WorldParams } from './seed.ts'
+import { mulberry32, pack, unpack, type WorldParams } from './seed'
 
 const TAU = Math.PI * 2
 

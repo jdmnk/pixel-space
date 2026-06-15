@@ -4,7 +4,7 @@
 // human visitors straight into the app at /?seed=XXX.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { canonicalSeed, decodeSeed, TYPE_NAMES } from '../src/gen/seed.ts'
+import { canonicalSeed, decodeSeed, TYPE_NAMES } from '../src/gen/seed'
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!)
 

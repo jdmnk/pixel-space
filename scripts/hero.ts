@@ -8,9 +8,9 @@
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { renderScene, BG } from '../src/gen/render.ts'
-import { pack, unpack, mulberry32, type WorldParams } from '../src/gen/seed.ts'
-import { createPixelCanvas, encodePng, hexToRgb as hex, type RGB } from '../src/gen/headless.ts'
+import { renderScene, BG } from '../src/gen/render'
+import { pack, unpack, mulberry32, type WorldParams } from '../src/gen/seed'
+import { createPixelCanvas, encodePng, hexToRgb as hex, type RGB } from '../src/gen/headless'
 
 type WorldSpec = Omit<WorldParams, 'packed'>
 

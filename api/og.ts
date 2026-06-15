@@ -3,9 +3,9 @@
 // immutably. Reuses the app's own renderer through the headless helpers.
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { decodeSeed } from '../src/gen/seed.ts'
-import { renderScene } from '../src/gen/render.ts'
-import { createPixelCanvas, encodePng, upscale } from '../src/gen/headless.ts'
+import { decodeSeed } from '../src/gen/seed'
+import { renderScene } from '../src/gen/render'
+import { createPixelCanvas, encodePng, upscale } from '../src/gen/headless'
 
 // render small for the chunky retro look, then nearest-neighbour upscale
 const W0 = 240
