@@ -23,6 +23,11 @@ _Worlds are deterministic, so the same seven characters always give you back the
 
 <br/>
 
+> [!NOTE]
+> An experiment in what **Claude Fable 5** can picture. Every planet here was imagined and drawn by Fable 5 — it decided what a gas giant, a neutron star, a crumbling moon should look like, and placed every pixel and colour to make them real. No images, no references, no art assets. Beautiful pixel art conjured out of thin air, purely from understanding how these worlds ought to look.
+
+<br/>
+
 ## ✦ what is it
 
 Two buttons. **Generate** rolls a new world; **mutate** nudges the current one so you land on a cousin rather than a stranger.
