@@ -24,9 +24,8 @@ _Worlds are deterministic, so the same seven characters always give you back the
 <br/>
 
 > [!NOTE]
-> An experiment in what **Claude Fable 5** can picture. Every planet here was imagined and drawn by Fable 5 — it decided what a gas giant, a neutron star, a crumbling moon should look like, and placed every pixel and colour to make them real. No images, no references, no art assets. Beautiful pixel art conjured out of thin air, purely from understanding how these worlds ought to look.
-
-<br/>
+> An experiment to prove how good **Claude Fable 5** is at visual understanding. The entire drawing algorithm was one-shotted from a simple pixel planets image example. Needles to say it did an incredible job in writing an algo for generating similar images and for various other space objects not asked for initially, nor provided examples for.
+> <br/>
 
 ## ✦ what is it
 
