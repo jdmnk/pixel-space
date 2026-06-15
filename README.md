@@ -25,7 +25,19 @@ _Worlds are deterministic, so the same seven characters always give you back the
 
 > [!NOTE]
 > An experiment to prove how good **Claude Fable 5** is at visual understanding. The entire drawing algorithm was one-shotted from a simple pixel planets image example. Needles to say it did an incredible job in writing an algo for generating similar images and for various other space objects not asked for initially, nor provided examples for.
+> Result ended up being a deps-free JS file with a bit of value noise and tons of nested loops painting on a canvas.
+>
+> <details>
+> <summary><b>the original prompt (with typos and all)</b></summary>
 > <br/>
+>
+> > given the example pictures in the folder, built a tiny react/vite app that has a minimnalistic ui with one button to generate and one to mutate. It generates images of planets and stars like in the references. It should have a deterministic system in place for generative generation of such artwork. Images should be simple - a single planet or star of various shapes and types, it can have multiple rings, another star circling it, it can even be detoriating, a neutron star, earth like planet, ice, gas, something else entirely. Images are small resolution pixel retro-like images. Colors should make sense, somewhat at least. not every generated image might be perfectly beautiful and thats fine.
+> >
+> > same seed should generate the same image. Seed is exposed to the user to read and to write (generate from the seed). keep this collapsed by default
+> >
+> > ui intrface should be cute, think a simple pixel art generation website, as minimalistic as it can possibly get, while having a relaxed, pastelle, cute look with a special font.
+>
+> </details>
 
 ## ✦ what is it
 
