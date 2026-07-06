@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderScene, BG } from '../src/gen/render'
 import { pack, unpack, mulberry32, type WorldParams } from '../src/gen/seed'
-import { createPixelCanvas, encodePng, hexToRgb as hex, type RGB } from '../src/gen/headless'
+import { createPixelCanvas, encodePng, upscale, hexToRgb as hex, type RGB } from '../src/gen/headless'
 
 type WorldSpec = Omit<WorldParams, 'packed'>
 
@@ -232,3 +232,23 @@ const og = compose({
   ],
 })
 writePng(join(ROOT, 'public', 'og.png'), og.img, 1200, 630)
+
+// favicon — a single black hole, drawn by our own renderer. Rendered small
+// for the chunky pixel look, then upscaled so it stays crisp in the tab.
+const FAVICON: WorldSpec = {
+  type: 7,
+  palette: 0,
+  size: 0,
+  rings: 0,
+  ringStyle: 2,
+  companion: 0,
+  decay: 0,
+  feature: 2,
+  detail: 0,
+}
+// canvas is wide enough that the accretion disk (~R*1.9 + a few px) clears
+// the edges with margin to spare
+const favSrc = createPixelCanvas(48, 48)
+renderScene(favSrc.canvas, unpack(pack(FAVICON)))
+const fav = upscale(favSrc.pixels, 48, 48, 3)
+writePng(join(ROOT, 'public', 'favicon.png'), fav.pixels, fav.width, fav.height)
